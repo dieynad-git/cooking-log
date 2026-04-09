@@ -1,0 +1,87 @@
+-- =========================================
+-- Création de la base de données
+-- =========================================
+-- Si la base n'existe pas encore
+-- (à exécuter depuis psql en tant que superuser)
+DROP DATABASE IF EXISTS cooking_log;
+CREATE DATABASE cooking_log;
+\c cooking_log
+
+--=======================================================================
+-- Cooking Log SQL Script
+-- This script creates the necessary tables for a cooking log application,
+-- including users, recipes, and reviews.
+--========================================================================
+
+-- User table to store user information
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Recipe table to store recipe information, linked to the user who created it
+CREATE TABLE IF NOT EXISTS recipes (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    ingredients TEXT,
+    preparation TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Review table to store user reviews for recipes, linked to both the recipe and the user
+CREATE TABLE IF NOT EXISTS reviews (
+    id SERIAL PRIMARY KEY,
+    recipe_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- CREATE TABLE ingredients (
+--     id SERIAL PRIMARY KEY,
+--     name VARCHAR(255) NOT NULL UNIQUE
+-- );
+
+-- CREATE TABLE recipe_ingredients (
+--     recipe_id INTEGER NOT NULL,
+--     ingredient_id INTEGER NOT NULL,
+--     quantity VARCHAR(255),
+--     PRIMARY KEY (recipe_id, ingredient_id),
+--     FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+--     FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE
+-- );
+
+
+--==================================================================
+-- Sample Data Insertion
+--==================================================================
+
+-- Users
+INSERT INTO users (username, email, password_hash)
+VALUES
+('alice', 'alice@example.com', 'hashedpassword1'),
+('bob', 'bob@example.com', 'hashedpassword2'),
+('charlie', 'charlie@example.com', 'hashedpassword3');
+
+-- Recipes
+INSERT INTO recipes (user_id, title, ingredients, preparation, created_at)
+VALUES
+(1, 'Pancakes', 'Farine, Lait, Oeufs, Sucre', 'Mélanger les ingrédients, cuire à la poêle', '2026-04-09 10:00:00'),
+(1, 'Salade César', 'Laitue, Poulet, Parmesan, Croutons, Sauce César', 'Mélanger les ingrédients et servir', '2026-04-09 11:00:00'),
+(2, 'Spaghetti Bolognese', 'Pâtes, Viande hachée, Sauce tomate, Oignons', 'Cuire la viande, ajouter la sauce et les pâtes', '2026-04-09 12:00:00');
+
+-- Reviews (notations et commentaires pour les recettes)
+INSERT INTO reviews (recipe_id, user_id, rating, comment)
+VALUES
+(1, 1, 5, 'Délicieux et facile à faire'),
+(1, 2, 4, 'Bon mais un peu sucré'),
+(2, 1, 3, 'Correct mais la sauce était trop forte'),
+(3, 2, 5, 'Recette parfaite pour un dîner rapide');
